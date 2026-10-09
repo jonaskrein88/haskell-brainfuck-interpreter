@@ -1,4 +1,4 @@
-import Data.Int  ( Int8 )
+import Data.Word (Word8)
 import Data.Maybe (mapMaybe, listToMaybe)
 import System.Environment
 import System.Exit  
@@ -13,7 +13,7 @@ data Command = MoveLeft
 			|Write deriving (Show)
 
 
-data Tape    = Tape [Int8] Int8 [Int8] deriving (Show)
+data Tape    = Tape [Word8] Word8 [Word8] deriving (Show)
 data Program = Program [Command] Command [Command] deriving (Show)
 
 
@@ -66,7 +66,7 @@ move_left (Tape (l:ls) x right) = Tape ls l (x:right)
 
 
 print_current :: Tape -> IO ()
-print_current (Tape _ x _ ) = let c = toEnum (fromIntegral x) :: Char in putChar c
+print_current (Tape _ x _) = putChar (toEnum (fromIntegral x))
 
 
 
@@ -84,21 +84,22 @@ execute_command program@( Program _ Loop_End _ ) tape@(Tape _ x _ ) | x > 0  =
 	maybe (print "ERROR while finding loop begin") (`run_next` tape) $
 	find_loop_begin 0 $ prev_command program
 
-execute_command program@( Program _ Loop_Begin _ ) tape@(Tape _ x _ ) | x == 0  = 
+execute_command program@( Program _ Loop_Begin _ ) tape@(Tape _ x _ ) | x == 0 = 
 	maybe (print "ERROR while finding end of loop") (`run_next` tape) $
 	find_loop_end 0 $ next_command program
-
-
 
 execute_command program@( Program _ Loop_Begin _ ) tape   = run_next program tape
 execute_command program@( Program _ Write _ ) tape        = print_current tape >> run_next program tape
 execute_command p t = run_next p t -- catch all; just in case
 
 
+
+
 -- returns programm with moved pointer or Nothing
 next_command :: Program -> Maybe Program
 next_command (Program _ _ [])      = Nothing
 next_command (Program ps x (n:ns)) = Just $ Program (x:ps) n ns
+
 
 prev_command :: Program -> Maybe Program
 prev_command (Program [] _ _)      = Nothing
@@ -147,7 +148,7 @@ run_next program tape =
 main :: IO ()
 main = getArgs >>= (\args ->
 	case listToMaybe args of
-		Nothing -> pure ()
+		Nothing -> putStrLn "No filepath provided"
 		Just file -> read_program file 
 			-- >>= (\x -> print x >> pure x)   -- just printing the code for testing
 			>>= maybe (putStrLn "No valid Brainf**k code found.") (`execute_command` newTape)
