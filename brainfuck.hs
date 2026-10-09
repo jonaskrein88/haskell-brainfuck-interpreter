@@ -38,7 +38,6 @@ parse source =
 		(x:xs) -> Just $ Program [] x xs
 
 
--- use <$> to wrap the Maybe Program into IO
 read_program :: String -> IO (Maybe Program)
 read_program s = parse <$> readFile s
 
@@ -79,7 +78,7 @@ execute_command program@( Program _ MoveLeft _ ) tape     = run_next program $ m
 execute_command program@( Program _ MoveRight _ ) tape    = run_next program $ move_right tape  
 
 
--- i find these lines hard to read maybe should convert to matching the maybe myself
+
 execute_command program@( Program _ Loop_End _ ) tape@(Tape _ x _ ) | x > 0  = 
 	maybe (print "ERROR while finding loop begin") (`run_next` tape) $
 	find_loop_begin 0 $ prev_command program
@@ -90,7 +89,7 @@ execute_command program@( Program _ Loop_Begin _ ) tape@(Tape _ x _ ) | x == 0 =
 
 execute_command program@( Program _ Loop_Begin _ ) tape   = run_next program tape
 execute_command program@( Program _ Write _ ) tape        = print_current tape >> run_next program tape
-execute_command p t = run_next p t -- catch all; just in case
+execute_command p t = run_next p t 
 
 
 
@@ -109,7 +108,7 @@ prev_command (Program (p:ps) x ns) = Just $ Program ps p (x:ns)
 
 
 find_loop_begin :: Int -> Maybe Program -> Maybe Program
-find_loop_begin _ Nothing = Nothing 								-- failstate, could not find loop begin
+find_loop_begin _ Nothing = Nothing 								-- failstate
 
 find_loop_begin depth (Just program@( Program _ token _ )) = 
 	case token of
@@ -121,7 +120,7 @@ find_loop_begin depth (Just program@( Program _ token _ )) =
 
 
 find_loop_end :: Int -> Maybe Program -> Maybe Program
-find_loop_end _ Nothing = Nothing 								-- failstate, could not find loop begin
+find_loop_end _ Nothing = Nothing 								-- failstate
 
 find_loop_end depth (Just program@( Program _ token _ )) = 
 	case token of
@@ -134,7 +133,7 @@ find_loop_end depth (Just program@( Program _ token _ )) =
 
 
 
--- advances the instruction pointer and executes on Just
+
 run_next :: Program -> Tape -> IO ()
 run_next program tape =
 	let next = next_command program
@@ -144,12 +143,12 @@ run_next program tape =
 		Just p  -> execute_command p tape
 
 
--- not using do blocks for transparency
+-- not using do blocks cause on principle
 main :: IO ()
 main = getArgs >>= (\args ->
 	case listToMaybe args of
 		Nothing -> putStrLn "No filepath provided"
 		Just file -> read_program file 
-			-- >>= (\x -> print x >> pure x)   -- just printing the code for testing
+			-- >>= (\x -> print x >> pure x)   -- printing the tokens for testing
 			>>= maybe (putStrLn "No valid Brainf**k code found.") (`execute_command` newTape)
 	)
