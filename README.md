@@ -1,11 +1,10 @@
-## Basic interpreter for the Brainfuck programming language in Haskell
+### Basic interpreter for the [Brainfuck programming language](https://esolangs.org/wiki/Brainfuck) in Haskell
 
 
 Just run with brainfuck source file as argument:
 ```
-brainfuck.exe hello.txt
+brainfuck.exe hello_world.b
 ```
 
-Does not yet support , (read user input)
-
-There will be a runtime error if a path is supplied but does not point to an existing file
+There will be a runtime error if a path is supplied but does not point to an existing file.
+Tested on Windows.
