@@ -9,7 +9,7 @@ brainfuck.exe hello_world.b
 There will be a runtime error if a path is supplied but does not point to an existing file.
 Tested on Windows.
 
-```
+```brainfuck
 Brainfuck Language Overview
 
 > 	move the pointer to the right
