@@ -67,7 +67,7 @@ move_left (Tape (l:ls) x right) = Tape ls l (x:right)
 
 
 print_current :: Tape -> IO ()
-print_current (Tape _ x _) = putStr "->" >> putChar (toEnum (fromIntegral x))
+print_current (Tape _ x _) = putChar (toEnum (fromIntegral x))
 
 
 charToWord8 :: Char -> Word8
@@ -159,6 +159,6 @@ main = hSetBuffering stdin NoBuffering
 	case listToMaybe args of
 		Nothing -> putStrLn "No filepath provided"
 		Just file -> read_program file 
-			>>= (\x -> print x >> pure x)   -- printing the tokens for testing
+			-- >>= (\x -> print x >> pure x)   -- printing the tokens for testing
 			>>= maybe (putStrLn "No valid Brainf**k code found.") (`execute_command` newTape)
 	)
