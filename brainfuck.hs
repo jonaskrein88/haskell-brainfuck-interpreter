@@ -2,6 +2,8 @@ import Data.Word (Word8)
 import Data.Maybe (mapMaybe, listToMaybe)
 import System.Environment
 import System.Exit  
+import System.IO (hSetBinaryMode, stdout, stdin, hSetBuffering, BufferMode(NoBuffering))
+
 
 data Command = MoveLeft
 			|MoveRight
@@ -65,8 +67,14 @@ move_left (Tape (l:ls) x right) = Tape ls l (x:right)
 
 
 print_current :: Tape -> IO ()
-print_current (Tape _ x _) = putChar (toEnum (fromIntegral x))
+print_current (Tape _ x _) = putStr "->" >> putChar (toEnum (fromIntegral x))
 
+
+charToWord8 :: Char -> Word8
+charToWord8 c = fromIntegral (fromEnum c)
+
+get_char :: Tape -> IO Tape
+get_char (Tape l _ r) = (\x -> Tape l (charToWord8 x) r) <$> getChar
 
 
 
@@ -89,6 +97,7 @@ execute_command program@( Program _ Loop_Begin _ ) tape@(Tape _ x _ ) | x == 0 =
 
 execute_command program@( Program _ Loop_Begin _ ) tape   = run_next program tape
 execute_command program@( Program _ Write _ ) tape        = print_current tape >> run_next program tape
+execute_command program@( Program _ Read _ ) tape         = get_char tape >>= run_next program
 execute_command p t = run_next p t 
 
 
@@ -108,8 +117,7 @@ prev_command (Program (p:ps) x ns) = Just $ Program ps p (x:ns)
 
 
 find_loop_begin :: Int -> Maybe Program -> Maybe Program
-find_loop_begin _ Nothing = Nothing 								-- failstate
-
+find_loop_begin _ Nothing = Nothing 				
 find_loop_begin depth (Just program@( Program _ token _ )) = 
 	case token of
 		Loop_End   -> find_loop_begin (depth+1) $ prev_command program
@@ -120,8 +128,7 @@ find_loop_begin depth (Just program@( Program _ token _ )) =
 
 
 find_loop_end :: Int -> Maybe Program -> Maybe Program
-find_loop_end _ Nothing = Nothing 								-- failstate
-
+find_loop_end _ Nothing = Nothing
 find_loop_end depth (Just program@( Program _ token _ )) = 
 	case token of
 		Loop_Begin   -> find_loop_end (depth+1) $ next_command program
@@ -145,10 +152,13 @@ run_next program tape =
 
 -- not using do blocks cause on principle
 main :: IO ()
-main = getArgs >>= (\args ->
+main = hSetBuffering stdin NoBuffering
+	>> hSetBinaryMode stdout True
+	>> hSetBinaryMode stdin True
+	>> getArgs >>= (\args ->
 	case listToMaybe args of
 		Nothing -> putStrLn "No filepath provided"
 		Just file -> read_program file 
-			-- >>= (\x -> print x >> pure x)   -- printing the tokens for testing
+			>>= (\x -> print x >> pure x)   -- printing the tokens for testing
 			>>= maybe (putStrLn "No valid Brainf**k code found.") (`execute_command` newTape)
 	)
